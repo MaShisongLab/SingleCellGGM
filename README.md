@@ -2,7 +2,7 @@
 
 **An algorithm for single-cell gene co-expression network analysis**
 
-<b>SingleCellGGM</b> (single-cell graphical Gaussian model) is a MATLAB algorithm for single-cell gene co-expression network analysis based on the graphical Gaussian model (GGM). The algorithm is modified from a previously published method ([Ma *et al*, 2007](#References)) and a previous MATLAB algorithm [rgsGGM](https://github.com/MaShisongLab/rgsGGM) ([Wang *et al*, 2023](#References)), both for conducting GGM co-expression network analysis on bulk transcriptome dataset.
+<b>SingleCellGGM</b> (single-cell graphical Gaussian model) is a MATLAB algorithm for single-cell gene co-expression network analysis based on the graphical Gaussian model (GGM). The algorithm is modified from a previously published method ([Ma *et al*, 2007](#References)) and a previous MATLAB algorithm [rgsGGM](https://github.com/MaShisongLab/rgsGGM) ([Wang *et al*, 2023](#References)), both for conducting GGM co-expression network analysis on bulk transcriptome datasets.
 
 SingleCellGGM takes a single-cell gene expression matrix as input and uses a process consisting of ~20,000 iterations to calculate partial correlation coefficients (<i>pcors</i>) between gene pairs. For each gene pair, SingleCellGGM also calculates how many cells the gene pair are co-expressed in. SingleCellGGM then takes the gene pairs with <i>pcor</i> >= a selected cutoff value and co-expressed in >= a selected number of cells to construct a GGM gene co-expression network. For more details, please refer to [Xu et al, 2023](#References). 
 
@@ -24,6 +24,17 @@ The algorithm takes a log-normalized gene expression matrix, the number of itera
 `number_of_iterations` - the number of iterations used for *pcor* calculation, usually 20000<br/>
 `gene_names` - the names for the genes in the matrix <br/>
 `dataset_name` - the name of the dataset
+
+<B>fdr = fdr_control(`expression_matrix`,`ggm`)</B><br>
+
+`expression_matrix` - the gene expression matrix
+<br>`ggm` - the result of SingleCellGGM function
+
+<B>ggm_adjusted = adjust_cutoff(`ggm`,`pcor_cutoff`,`coexpressed_cell_cutoff`)</B>
+
+`ggm` - the result of SignleCellGGM function
+<br>`pcor_cutoff` - cutoff for pcor to be adjusted
+<br>`coexpressed_cell_cutoff` - cutoff for number of coexpressed cells to be adjusted
 
 
 Below, we use a mouse single-cell gene expression matrix obtained from the MCA project ([Han *et al*, 2018](#References)) as an example to demonstrate how to conduct single-cell GGM gene co-expression network analysis via SingleCellGGM. The matrix file "MCA_Figure2-batch-removed.txt.tar.gz" can be downloaded from [Figureshare](https://figshare.com/ndownloader/files/10351110?private_link=865e694ad06d5857db4b) as provided by MCA. Unzip and place the file "Figure2-batch-removed.txt" into the MATLAB working folder. We also obtained the Ensembl gene IDs for the genes within the matrix and saved it in a file "data/MCA.ensembl.gene.ids.txt".  
@@ -57,6 +68,17 @@ ggm.SigEdges(1:5,:)
 
 % Save all gene pairs to a file for gene co-expression construction
 writetable(ggm.SigEdges(:,1:3),'mca.ggm.network.txt','Delimiter','tab','WriteVariableNames',FALSE)
+
+% FDR Control - control the false discovery rate with different pcor cutoff value
+fdr = fdr_control(expression_matrix, ggm)
+
+% Inspect FDR rate
+fdr
+fdr.fdr
+
+% Adjust pcor cutoff to 0.02
+ggm_adjusted = adjust_cutoff(ggm, 0.02)
+
 ```
 
 Here is a glimpse into the results:
@@ -75,6 +97,7 @@ ggm =
              samples_num: 61637
              RoundNumber: 20000
                 SigEdges: [127229x9 table]
+             DatasetName: 'mca'
 
 
 ggm.SigEdges(1:5,:)
@@ -92,7 +115,87 @@ ans =
     'ENSMUSG00000109644'    'ENSMUSG00000089678'    0.038486        141         0.20272       660            120                65              'mca'
     'ENSMUSG00000109644'    'ENSMUSG00000109311'    0.042568        136         0.45847       660            692               321              'mca'
 ```
+```shell
+fdr
 
+fdr = 
+
+  fdr_control with properties:
+
+       gene_num: 24802
+      gene_name: {24802x1 cell}
+    samples_num: 61637
+    RoundNumber: 20000
+       SigEdges: [1185x9 table]
+            fdr: [91x5 table]
+    DatasetName: 'mca'
+
+fdr.fdr
+
+ans =
+
+  91x5 table
+
+    Pcor     SigEdgeNum        FDR         SigPermutatedEdgeNum    SigPermutatedEdgeProportion
+    _____    __________    ____________    ____________________    ___________________________
+
+     0.01     1645160      '     0.283'           464795                     0.00151          
+    0.011     1279237      '     0.203'           259572                    0.000844          
+    0.012     1019825      '     0.141'           143319                    0.000466          
+    0.013      832700      '    0.0939'            78154                    0.000254          
+    0.014      694468      '    0.0613'            42545                    0.000138          
+    0.015      589634      '    0.0391'            23077                     7.5e-05          
+    0.016      508505      '    0.0246'            12532                    4.07e-05          
+    0.017      444704      '    0.0153'             6783                    2.21e-05          
+    0.018      392243      '   0.00962'             3775                    1.23e-05          
+    0.019      348797      '   0.00604'             2108                    6.85e-06          
+     0.02      312383      '   0.00379'             1185                    3.85e-06          
+    0.021      281495      '   0.00244'              687                    2.23e-06          
+    0.022      254676      '   0.00147'              374                    1.22e-06          
+    0.023      231776      '  0.000962'              223                    7.25e-07          
+    0.024      211169      '  0.000578'              122                    3.97e-07          
+    0.025      193134      '  0.000373'               72                    2.34e-07          
+    0.026      176888      '  0.000232'               41                    1.33e-07          
+    0.027      162583      '  0.000148'               24                     7.8e-08          
+    0.028      149481      '    0.0001'               15                    4.88e-08          
+    0.029      137858      '  7.98e-05'               11                    3.58e-08          
+     0.03      127229      '  4.72e-05'                6                    1.95e-08          
+    0.031      117748      '   3.4e-05'                4                     1.3e-08          
+    0.032      109148      '  2.75e-05'                3                    9.75e-09          
+    0.033      101235      '  2.96e-05'                3                    9.75e-09          
+    0.034       94054      '  1.06e-05'                1                    3.25e-09          
+    0.035       87357      '  1.14e-05'                1                    3.25e-09          
+    0.036       81282      '  1.23e-05'                1                    3.25e-09          
+    0.037       75650      '  1.32e-05'                1                    3.25e-09          
+    0.038       70563      '  1.42e-05'                1                    3.25e-09          
+    0.039       65973      '  1.52e-05'                1                    3.25e-09          
+     0.04       61606      '< 1.52e-05'                0                           0          
+    0.041       57559      '< 1.52e-05'                0                           0          
+    0.042       53880      '< 1.52e-05'                0                           0          
+    0.043       50509      '< 1.52e-05'                0                           0          
+    0.044       47420      '< 1.52e-05'                0                           0          
+    0.045       44399      '< 1.52e-05'                0                           0                   
+
+```
+```shell
+ggm_adjusted
+
+ggm_adjusted = 
+
+  adjust_cutoff with properties:
+
+                gene_num: 24802
+               gene_name: {24802x1 cell}
+                pcor_all: [24802x24802 single]
+       pcor_sampling_num: [24802x24802 int16]
+                     PCC: [24802x24802 single]
+    coexpressed_cell_num: [24802x24802 int32]
+             samples_num: 61637
+             RoundNumber: 20000
+                SigEdges: [312383x9 table]
+             DatasetName: 'mca'
+
+```
 The network can then be clustered via network clustering algorithm to obtain gene co-expression module and used for down-stream analysis.
 
 ## References
@@ -103,6 +206,5 @@ Ma S, Gong Q, and Bohnert HJ. 2007. An Arabidopsis gene network based on the gra
 
 Xu Y, Wang Y, and Ma S. 2023. SingleCellGGM enables gene expression program identification from single-cell transcriptomes and facilitates universal cell label transfer. *submitted*
 
-Wang Y, Zhang Y, Yu N, Li B, Gong J, Mei Y, Bao J, and Ma S. 2023. Decoding transcriptional regulation via a human gene expression predictor. *Journal of Genetics and Genomics* https://doi.org/10.1016/j.jgg.2023.01.006
- 
+Wang Y, Zhang Y, Yu N, Li B, Gong J, Mei Y, Bao J, and Ma S. 2023. Decoding transcriptional regulation via a human gene expression predictor. *Journal of Genetics and Genomics* 50:305-317.
 
