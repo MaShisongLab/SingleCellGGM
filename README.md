@@ -9,7 +9,7 @@ SingleCellGGM takes a single-cell gene expression matrix as input and uses a pro
 ## Table of Contents
 - [Install](#Install)
 - [Usage](#Usage)
-- [Tutorial](#Turorial)
+- [Tutorial](#Tutorial)
 - [References](#References)
 
 ## Install
