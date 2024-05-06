@@ -4,38 +4,40 @@
 
 <b>SingleCellGGM</b> (single-cell graphical Gaussian model) is a MATLAB algorithm for single-cell gene co-expression network analysis based on the graphical Gaussian model (GGM). The algorithm is modified from a previously published method ([Ma *et al*, 2007](#References)) and a previous MATLAB algorithm [rgsGGM](https://github.com/MaShisongLab/rgsGGM) ([Wang *et al*, 2023](#References)), both for conducting GGM co-expression network analysis on bulk transcriptome datasets.
 
-SingleCellGGM takes a single-cell gene expression matrix as input and uses a process consisting of ~20,000 iterations to calculate partial correlation coefficients (<i>pcors</i>) between gene pairs. For each gene pair, SingleCellGGM also calculates how many cells the gene pair are co-expressed in. SingleCellGGM then takes the gene pairs with <i>pcor</i> >= a selected cutoff value and co-expressed in >= a selected number of cells to construct a GGM gene co-expression network. For more details, please refer to [Xu et al, 2023](#References). 
+SingleCellGGM takes a single-cell gene expression matrix as input and uses a process consisting of ~20,000 iterations to calculate partial correlation coefficients (<i>pcors</i>) between gene pairs. For each gene pair, SingleCellGGM also calculates in how many cells the gene pair are co-expressed. SingleCellGGM then takes the gene pairs with <i>pcor</i> >= a selected cutoff value and co-expressed in >= a selected number of cells to construct a GGM gene co-expression network. For more details, please refer to [Xu et al, 2023](#References). 
 
 ## Table of Contents
 - [Install](#Install)
 - [Usage](#Usage)
+- [Tutorial](#Turorial)
 - [References](#References)
 
 ## Install
-This algorithm requires [MATLAB](https://www.mathworks.com/products/matlab.html). Copy the file `SingleCellGGM.m` to your working folder or the MATLAB scripts folder and start using it.
+This algorithm requires [MATLAB](https://www.mathworks.com/products/matlab.html). Copy the files `SingleCellGGM.m`, `fdr_control.m`, and `adjust_cutoff.m` to your working folder or the MATLAB scripts folder to begin utilization.
 
 ## Usage
 
-The algorithm takes a log-normalized gene expression matrix, the number of iterations, the names of the genes, and the name of dataset as inputs. The expression matrix should have samples in rows and genes in columns. The sample numbers should be large and the low-expression genes should be filtered out first. 
+The algorithm takes a log-normalized gene expression matrix, the number of iterations, the names of the genes, and optionally, the name of dataset as inputs. The expression matrix should have cells in rows and genes in columns. The cell numbers should be large (>5000 recommended) and low-expression genes should be filtered out first. 
 
 <B>ggm = SingleCellGGM(`expression_matrix`,`number_of_iterations`,`gene_names`,`dataset_name`)</B>
 
-`expression_matrix` - the gene expression matrix, samples in rows, genes in columns <br/>
-`number_of_iterations` - the number of iterations used for *pcor* calculation, usually 20000<br/>
-`gene_names` - the names for the genes in the matrix <br/>
-`dataset_name` - the name of the dataset
+`expression_matrix` - gene expression matrix (double format), cells in rows, genes in columns<br/>
+`number_of_iterations` - number of iterations used for *pcor* calculation, typically set to 20000<br/>
+`gene_names` - names of genes in the matrix <br/>
+`dataset_name` (optional) - name of the dataset (default is 'na')<br><br>
+An alternative for <i>number_of_iterations</i> is calculated as <i>round(gene_number * (gene_number - 1) / 39980)</i>, ensuring that each gene pair is sampled, on average, in 100 iterations.
 
-<B>fdr = fdr_control(`expression_matrix`,`ggm`)</B><br>
+<B>fdr = fdr_control(`expression_matrix`,`ggm`,`permutation_fraction`)</B><br>
 
-`expression_matrix` - the gene expression matrix
-<br>`ggm` - the result of SingleCellGGM function
+`expression_matrix` - gene expression matrix
+<br>`ggm` - result from SingleCellGGM function
+<br>`permutation_fraction` - fraction of genes to be permutated (default is 1)
 
 <B>ggm_adjusted = adjust_cutoff(`ggm`,`pcor_cutoff`,`coexpressed_cell_cutoff`)</B>
 
-`ggm` - the result of SignleCellGGM function
-<br>`pcor_cutoff` - cutoff for pcor to be adjusted
-<br>`coexpressed_cell_cutoff` - cutoff for number of coexpressed cells to be adjusted
-
+`ggm` - result from SignleCellGGM function
+<br>`pcor_cutoff` - cutoff for pcor to be adjusted (default is 0.03)
+<br>`coexpressed_cell_cutoff` - cutoff for number of coexpressed cells to be adjusted (default is 10)
 
 Below, we use a mouse single-cell gene expression matrix obtained from the MCA project ([Han *et al*, 2018](#References)) as an example to demonstrate how to conduct single-cell GGM gene co-expression network analysis via SingleCellGGM. The matrix file "MCA_Figure2-batch-removed.txt.tar.gz" can be downloaded from [Figureshare](https://figshare.com/ndownloader/files/10351110?private_link=865e694ad06d5857db4b) as provided by MCA. Unzip and place the file "Figure2-batch-removed.txt" into the MATLAB working folder. We also obtained the Ensembl gene IDs for the genes within the matrix and saved it in a file "data/MCA.ensembl.gene.ids.txt".  
 
@@ -45,6 +47,9 @@ Below, we use a mouse single-cell gene expression matrix obtained from the MCA p
 expression_matrix = readtable('Figure2-batch-removed.txt','ReadRowNames',true);
 expression_matrix = table2array(expression_matrix);
 
+% Ensure the matrix is in double format
+expression_matrix = double(expression_matrix);
+
 % Log normalization
 expression_matrix = log2( expression_matrix ./ sum( expression_matrix ) * 10000 + 1 );
 expression_matrix = expression_matrix';
@@ -53,11 +58,19 @@ expression_matrix = expression_matrix';
 gene = readcell('data/MCA.ensembl.gene.ids.txt');
 
 % Out of 25133 genes in the matrix, 24802 have Ensembl gene IDs. Only the 
-% genes with Ensembl gene IDs will be used for network construction.
+% genes with Ensembl gene IDs will be used for network construction
 idx = contains(gene,'ENSMUSG');
 
 expression_matrix = expression_matrix(:,idx);
 gene = gene(idx);
+
+% Filter out genes expressed in less than 10 cells
+idx_expression_filter = sum(expression_matrix > 0) >= 10;
+expression_matrix = expression_matrix(:,idx_expression_filter);
+gene = gene(idx_expression_filter);
+
+% Convert to sparse matrix format to save memory
+expression_matrix = sparse( expression_matrix);
 
 % Conduct single-cell gene co-expression analysis via SingleCellGGM
 ggm = SingleCellGGM( expression_matrix, 20000, gene, 'mca')
@@ -66,8 +79,8 @@ ggm = SingleCellGGM( expression_matrix, 20000, gene, 'mca')
 ggm
 ggm.SigEdges(1:5,:)
 
-% Save all gene pairs to a file for gene co-expression construction
-writetable(ggm.SigEdges(:,1:3),'mca.ggm.network.txt','Delimiter','tab','WriteVariableNames',FALSE)
+% Save all gene pairs to a file for gene co-expression network construction
+writetable(ggm.SigEdges(:,1:3),'mca.ggm.network.txt','Delimiter','tab','WriteVariableNames',false)
 
 % FDR Control - control the false discovery rate with different pcor cutoff value
 fdr = fdr_control(expression_matrix, ggm)
@@ -197,6 +210,10 @@ ggm_adjusted =
 
 ```
 The network can then be clustered via network clustering algorithm to obtain gene co-expression module and used for down-stream analysis.
+
+## Tutorial
+
+Check out [here](https://github.com/MaShisongLab/SingleCellGGM_Network_Analysis_Tutorial) for a tutorial on SingleCellGGM network analysis and downstream co-expression module analysis.
 
 ## References
 

@@ -32,20 +32,27 @@ classdef fdr_control
 			gene_id = ggm_ori.gene_name;
 			round_num = ggm_ori.RoundNumber;
 
+			if issparse(x)
+				x = full(x);
+			end
 			for i = 1:permutation_num
 				j = permutation_id(i);
 				x(:,j) = x(randperm(n),j);
 				gene_id(j) = cellstr(strcat('P_',gene_id(j)));
 			end
-			
-			aa = x > 0;
-			cellnum = sum(aa);
-			cellnum = cellnum';
-			aa = double(aa);
-			coex = aa' * aa;
-			clear aa;
+			x = sparse(x);
 
-			cov_all = cov(x);
+			a = x > 0;
+			a = full(a);
+			cellnum = sum(a);
+			cellnum = cellnum';
+			a = double(a);
+			coex = a' * a;
+			clear a;
+
+			x = full(x);
+			x = x - mean(x);
+			cov_all = x' * x / (n - 1);
 			clearvars x;
 			rho = corrcov( cov_all );
 			

@@ -19,6 +19,10 @@ classdef SingleCellGGM
 			cut_off_coex_cell = 10;
 			selected_num = 2000;
 
+			if size(x,2) ~= size(gene_name,1)
+				error('Error encountered with the inputs!\nThe number of columns in the expression matrix should be equal the number of gene names.\nNumber of columns: %d\nNumber of gene names: %d\nPlease check and run again.\n',size(x,2),size(gene_name,1));
+			end
+
 			data_name = 'na';
 			if nargin > 3
 				data_name = dataset_name;
@@ -26,14 +30,21 @@ classdef SingleCellGGM
 
 			[n,p] = size(x);
 			
-			aa = x > 0;
-			cellnum = sum(aa);
+			a = x > 0;
+			if issparse(a)
+				a = full(a);
+			end
+			cellnum = sum(a);
 			cellnum = cellnum';
-			aa = double(aa);
-			coex = aa' * aa;
-			clear aa;
+			a = double(a);
+			coex = a' * a;
+			clearvars a;
 
-			cov_all = cov(x);
+			if issparse(x)
+				x = full(x);
+			end
+			x = x - mean(x);
+			cov_all = x' * x / (n - 1);
 			clearvars x;
 			rho = corrcov( cov_all );
 

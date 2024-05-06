@@ -16,7 +16,7 @@ classdef adjust_cutoff
 		function obj=adjust_cutoff (ggm_ori, cut_off_pcor, cut_off_coex_cell)
 			
 			if nargin < 2
-				cut_off_pcor = 0.02;
+				cut_off_pcor = 0.03;
 			end
 
 			if nargin < 3
