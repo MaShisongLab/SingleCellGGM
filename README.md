@@ -4,7 +4,7 @@
 
 <b>SingleCellGGM</b> (single-cell graphical Gaussian model) is a MATLAB algorithm for single-cell gene co-expression network analysis based on the graphical Gaussian model (GGM). The algorithm is modified from a previously published method ([Ma *et al*, 2007](#References)) and a previous MATLAB algorithm [rgsGGM](https://github.com/MaShisongLab/rgsGGM) ([Wang *et al*, 2023](#References)), both for conducting GGM co-expression network analysis on bulk transcriptome datasets.
 
-SingleCellGGM takes a single-cell gene expression matrix as input and uses a process consisting of ~20,000 iterations to calculate partial correlation coefficients (<i>pcors</i>) between gene pairs. For each gene pair, SingleCellGGM also calculates in how many cells the gene pair are co-expressed. SingleCellGGM then takes the gene pairs with <i>pcor</i> >= a selected cutoff value and co-expressed in >= a selected number of cells to construct a GGM gene co-expression network. For more details, please refer to [Xu et al, 2024](#References). 
+SingleCellGGM takes a single-cell gene expression matrix as input and uses a process consisting of ~20,000 iterations to calculate partial correlation coefficients (<i>pcors</i>) between gene pairs. For each gene pair, SingleCellGGM also calculates in how many cells the gene pair are co-expressed. SingleCellGGM then takes the gene pairs with <i>pcor</i> >= a selected cutoff value and co-expressed in >= a selected number of cells to construct a GGM gene co-expression network. For more details, please refer to [Xu et al, 2023](#References). 
 
 ## Table of Contents
 - [Install](#Install)
@@ -221,7 +221,7 @@ Han X, Wang R, Zhou Y, Fei L, Sun H, Lai S, Saadatpour A, Zhou Z, Chen H, Ye F, 
 
 Ma S, Gong Q, and Bohnert HJ. 2007. An Arabidopsis gene network based on the graphical Gaussian model. *Genome Research* 17:1614-1625.
 
-Xu Y, Wang Y, and Ma S. 2024. SingleCellGGM enables gene expression program identification from single-cell transcriptomes and facilitates universal cell label transfer. *submitted*
+Xu Y, Wang Y, and Ma S. 2023. SingleCellGGM enables gene expression program identification from single-cell transcriptomes and facilitates universal cell label transfer. *submitted*
 
 Wang Y, Zhang Y, Yu N, Li B, Gong J, Mei Y, Bao J, and Ma S. 2023. Decoding transcriptional regulation via a human gene expression predictor. *Journal of Genetics and Genomics* 50:305-317.
 
